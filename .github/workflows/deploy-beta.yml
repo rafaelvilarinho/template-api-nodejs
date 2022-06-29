@@ -1,0 +1,22 @@
+name: Deploy Beta Version
+
+on:
+  push:
+    branches: 
+      - "develop"
+
+jobs:
+  publishing:
+    name: Publishing on Beta
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      
+      - name: Publishing application on Beta
+        run: |
+          echo "${{ secrets.SSH_BETA_PRIVATE_KEY }}" > ./aws-key.pem
+          chmod 400 ./aws-key.pem
+          ssh -o StrictHostKeyChecking=no -i ./aws-key.pem ubuntu@${{ secrets.INSTANCE_IP_BETA }} '
+            
+          '

@@ -1,0 +1,69 @@
+name: Deploy Production Version
+
+on:
+  push:
+    branches: 
+      - master
+
+jobs:
+  building:
+    name: Building Image to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1
+
+      - name: Building, Generating and Pushing ECR image
+        run: |
+          npm install
+          npm run build
+
+          sudo docker build -t routines .
+          
+          aws ecr get-login-password --region sa-east-1 | sudo docker login --username AWS --password-stdin 413971377835.dkr.ecr.sa-east-1.amazonaws.com
+
+          sudo docker tag routines:latest 413971377835.dkr.ecr.sa-east-1.amazonaws.com/routines:prod
+          sudo docker push 413971377835.dkr.ecr.sa-east-1.amazonaws.com/routines:prod
+
+  publishing:
+    name: Publishing on Production
+    runs-on: ubuntu-latest
+    needs: building
+
+    steps:
+      - uses: actions/checkout@v1
+      
+      - name: Publishing application on Production
+        run: |
+          echo "${{ secrets.SSH_PROD_PRIVATE_KEY }}" > ./aws-key.pem
+          chmod 400 ./aws-key.pem
+
+          ssh -o StrictHostKeyChecking=no -i ./aws-key.pem ubuntu@54.233.252.28 '
+            aws ecr get-login-password --region sa-east-1 | sudo docker login --username AWS --password-stdin 413971377835.dkr.ecr.sa-east-1.amazonaws.com
+            
+            sudo docker container stop routines || echo "No container to stop"
+            sudo docker container rm routines || echo "No container to remove"
+            sudo docker volume prune -f || echo "No volume to remove"
+
+            sudo docker image pull 413971377835.dkr.ecr.sa-east-1.amazonaws.com/routines:prod
+
+            sudo docker run -d \
+              --name routines \
+              --log-driver=awslogs \
+              --log-opt awslogs-region=sa-east-1 \
+              --log-opt awslogs-group=routines-prod \
+              -p 8003:8003 \
+              -e "PORT=8003" \
+              -e "CORREIOS_SERVICE_URL=https://correios.keewe.com.br" \
+              -e "NOTIFICATIONS_SERVICE_URL=https://notifications.keewe.com.br" \
+              -e "LOGGER_LEVEL=TRACE" \
+              413971377835.dkr.ecr.sa-east-1.amazonaws.com/routines:prod
+
+            sudo docker image prune -f || echo "No images to remove"
+          '
