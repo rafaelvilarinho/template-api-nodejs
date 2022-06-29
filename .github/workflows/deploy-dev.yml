@@ -1,9 +1,9 @@
-name: Deploy Production Version
+name: Deploy Develop Version
 
 on:
   push:
     branches: 
-      - master-temp
+      - develop-temp
 
 jobs:
   building:
@@ -28,39 +28,39 @@ jobs:
           
           aws ecr get-login-password --region sa-east-1 | sudo docker login --username AWS --password-stdin ${{ secrets.PRIVATE_ECR_REPOSITORY }}
 
-          sudo docker tag template-api-nodejs:latest ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
-          sudo docker push ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
+          sudo docker tag template-api-nodejs:latest ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:dev
+          sudo docker push ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:dev
 
   publishing:
-    name: Publishing on Production
+    name: Publishing on Develop
     runs-on: ubuntu-latest
     needs: building
 
     steps:
       - uses: actions/checkout@v1
       
-      - name: Publishing application on Production
+      - name: Publishing application on Develop
         run: |
-          echo "${{ secrets.SSH_PROD_PRIVATE_KEY }}" > ./aws-key.pem
+          echo "${{ secrets.SSH_DEV_PRIVATE_KEY }}" > ./aws-key.pem
           chmod 400 ./aws-key.pem
 
-          ssh -o StrictHostKeyChecking=no -i ./aws-key.pem ubuntu@${{ secrets.INSTANCE_IP_PROD }} '
+          ssh -o StrictHostKeyChecking=no -i ./aws-key.pem ubuntu@${{ secrets.INSTANCE_IP_DEV }} '
             aws ecr get-login-password --region sa-east-1 | sudo docker login --username AWS --password-stdin ${{ secrets.PRIVATE_ECR_REPOSITORY }}
             
             sudo docker container stop template-api-nodejs || echo "No container to stop"
             sudo docker container rm template-api-nodejs || echo "No container to remove"
             sudo docker volume prune -f || echo "No volume to remove"
 
-            sudo docker image pull ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
+            sudo docker image pull ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:dev
 
             sudo docker run -d \
               --name template-api-nodejs \
               --log-driver=awslogs \
               --log-opt awslogs-region=sa-east-1 \
-              --log-opt awslogs-group=template-api-nodejs-prod \
+              --log-opt awslogs-group=template-api-nodejs-dev \
               -p 8001:8001 \
               -e "PORT=8001" \
-              ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
+              ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:dev
 
             sudo docker image prune -f || echo "No images to remove"
           '
