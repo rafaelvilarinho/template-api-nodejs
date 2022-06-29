@@ -6,7 +6,7 @@ export async function selectAll<T>(source: string, query: Record<string, unknown
 }
 
 export async function selectById<T>(source: string, id: string): Promise<T | null> {
-  return await findOne<T>(source, { id: new ObjectId(id) })
+  return await findOne<T>(source, { _id: new ObjectId(id) })
 }
 
 export async function select<T>(source: string, data: any): Promise<T | null> {

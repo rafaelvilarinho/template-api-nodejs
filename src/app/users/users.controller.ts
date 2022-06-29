@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import logger from '../../utils/logger';
 import { ErrorResponse, ErrorType, SuccessResponse } from '../../utils/response';
 import { RequestWithToken } from '../../utils/token/types';
-import { createUser, getAllUsers, getUserById, removeUser, updateUser, updateUserPassword, updateUserType } from './user.model';
+import { createUser, getAllUsers, getUserById, removeUser, signinUser, updateUser, updateUserPassword, updateUserType } from './user.model';
 
 export async function getAllUsersRoute(req: Request, res: Response) {
   try {
@@ -27,12 +27,37 @@ export async function getUserByIdRoute(req: Request, res: Response) {
       if (user) {
         SuccessResponse(res, user) 
       } else {
-        ErrorResponse(res, ErrorType.NotFound)
+        ErrorResponse(res, ErrorType.NotFound, { msg: "Usuário não encontrado" })
       }
   
     }
   } catch (error) {
     logger.error('Error getting an user', error)
+    ErrorResponse(res, ErrorType.InternalServerError, {}, error as Error)
+  }
+}
+
+export async function signinUserRoute(req: Request, res: Response) {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      ErrorResponse(res, ErrorType.BadRequest)
+    } else {
+      const user = await signinUser(email, password)
+
+      if (user) {
+        if (user.id) {
+          SuccessResponse(res, { user }) 
+        } else {
+          ErrorResponse(res, ErrorType.Forbidden, {msg: "Credenciais incorretas"})
+        }
+      } else {
+        ErrorResponse(res, ErrorType.InternalServerError)
+      }
+    }
+  } catch (error) {
+    logger.error('Error singing user', error)
     ErrorResponse(res, ErrorType.InternalServerError, {}, error as Error)
   }
 }

@@ -1,3 +1,11 @@
+export type SigninUserResponse = {
+  id: string,
+  name: string,
+  email: string,
+  type: UserType,
+  token: string,
+}
+
 export type CreateUserPayload = {
   name: string,
   email: string,
@@ -26,7 +34,6 @@ export type User = {
   id?: string,
   name: string,
   email: string,
-  password: string,
   type: UserType,
 }
 

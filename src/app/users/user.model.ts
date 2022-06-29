@@ -1,15 +1,54 @@
 
 import logger from '../../utils/logger';
-import { createHash } from '../../utils/crypt';
+import { createHash, validateHash } from '../../utils/crypt';
 import { list, read, readByEmail, remove, store, update, updatePassword, updateType } from './users.repository';
-import { CreateUserPayload, UpdateUserPayload, User, UserType } from './users.types';
+import { CreateUserPayload, SigninUserResponse, UpdateUserPayload, User, UserType } from './users.types';
+import { createToken } from '../../utils/token';
+import { TokenUserPayload } from '../../utils/token/types';
 
 export async function getAllUsers(): Promise<User[]> {
-  return await list()
+  const users = await list()
+
+  return users.map<User>(user => ({ id: user._id, name: user.name, email: user.email, type: user.type }))
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  return await read(id)
+  const user = await read(id)
+
+  return user ?
+    { id: user._id, name: user.name, email: user.email, type: user.type }
+    : null
+}
+
+export async function signinUser(email: string, password: string): Promise<SigninUserResponse | null> {
+  try {
+    const existingUser = await readByEmail(email)
+
+    if (existingUser) {
+      const validation = await validateHash(password, existingUser.password)
+
+      if (validation) {
+        const tokenUserPayload: TokenUserPayload = {
+          id: existingUser._id,
+          name: existingUser.name,
+          email: existingUser.email,
+          type: existingUser.type,
+        }
+        const token = await createToken(tokenUserPayload)
+
+        return { 
+          ...tokenUserPayload,
+          token
+        }
+      } 
+    } 
+
+    return {} as SigninUserResponse
+  } catch (error) {
+    logger.error('Error logging user', error)
+  }
+
+  return null
 }
 
 export async function createUser(data: CreateUserPayload): Promise<string | null> {
