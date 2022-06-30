@@ -20,7 +20,7 @@ export async function findAll<T>(collection: string, query: Record<string, unkno
 
     return data
   } catch (error) {
-    logger.error(error)
+    logger.error('', error)
   } finally {
     mongoDbClient.close()
   }
@@ -39,7 +39,7 @@ export async function findOne<T>(collection: string, query: Record<string, unkno
 
     return data
   } catch (error) {
-    logger.error(error)
+    logger.error('', error)
   } finally {
     mongoDbClient.close()
   }
@@ -58,7 +58,7 @@ export async function insert(collection: string, document: Record<string, unknow
 
     return data.insertedId.toString()
   } catch (error) {
-    logger.error(error)
+    logger.error('', error)
   } finally {
     mongoDbClient.close()
   }
@@ -82,7 +82,7 @@ export async function update(
 
     return data.modifiedCount > 0
   } catch (error) {
-    logger.error(error)
+    logger.error('', error)
   } finally {
     mongoDbClient.close()
   }
@@ -105,7 +105,7 @@ export async function remove(
 
     return data.deletedCount > 0
   } catch (error) {
-    logger.error(error)
+    logger.error('', error)
   } finally {
     mongoDbClient.close()
   }

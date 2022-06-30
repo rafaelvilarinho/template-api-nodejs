@@ -77,7 +77,11 @@ export async function createUserRoute(req: Request, res: Response) {
       })
 
       if (id) {
-        SuccessResponse(res, { id }) 
+        if (id !== "existing") {
+          SuccessResponse(res, { id }) 
+        } else {
+          ErrorResponse(res, ErrorType.Forbidden, {msg: "Usuário já existe"})
+        }
       } else {
         ErrorResponse(res, ErrorType.InternalServerError)
       }
@@ -101,7 +105,7 @@ export async function updateUserRoute(req: Request, res: Response) {
       if (ok) {
         SuccessResponse(res, true)
       } else {
-        ErrorResponse(res, ErrorType.InternalServerError)
+        ErrorResponse(res, ErrorType.InternalServerError, {msg: "Ocorreu um erro durante a atualização do usuário"})
       }
     }
   } catch (error) {

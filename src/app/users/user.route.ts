@@ -1,4 +1,4 @@
-import {Router} from 'express'
+import { Router } from 'express'
 import { validateTokenMiddleware } from '../../utils/token'
 import { createUserRoute, getAllUsersRoute, getUserByIdRoute, removeUserRoute, signinUserRoute, updateUserPasswordRoute, updateUserRoute, updateUserTypeRoute } from './users.controller'
 

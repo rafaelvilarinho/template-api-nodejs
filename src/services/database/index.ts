@@ -18,7 +18,7 @@ export async function insertOne(source: string, content: Record<string, unknown>
 }
 
 export async function updateOne(source: string, filter: Record<string, unknown>, content: Record<string, unknown>): Promise<boolean> {
-  return await update(source, filter, content)
+  return await update(source, filter, {$set: content})
 }
 
 export async function removeOne(source: string, filter: Record<string, unknown>): Promise<boolean> {

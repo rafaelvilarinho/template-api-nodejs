@@ -62,6 +62,7 @@ export async function update (id: string, name: string): Promise<boolean> {
   try {
     const data = await updateOne("users", {_id: new ObjectId(id)}, {
       name,
+      updatedAt: new Date()
     })
 
     return data
