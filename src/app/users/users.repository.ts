@@ -3,11 +3,13 @@ import { insertOne, removeOne, select, selectAll, selectById, updateOne } from '
 import logger from '../../utils/logger'
 import { UserDTO, UserType } from './users.types'
 
+const DATASOURCE = "users"
+
 export async function list (): Promise<UserDTO[]> {
   try {
-    const data = await selectAll<UserDTO>("users", {})
+    const response = await selectAll<UserDTO>(DATASOURCE, {})
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error getting all users', error)
   } 
@@ -15,11 +17,11 @@ export async function list (): Promise<UserDTO[]> {
   return []
 }
 
-export async function read (id: string): Promise<UserDTO | null> {
+export async function read (data: {id: string}): Promise<UserDTO | null> {
   try {
-    const data = await selectById<UserDTO>("users", id)
+    const response = await selectById<UserDTO>(DATASOURCE, data.id)
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error getting user by id', error)
   }
@@ -27,11 +29,11 @@ export async function read (id: string): Promise<UserDTO | null> {
   return null
 }
 
-export async function readByEmail (email: string): Promise<UserDTO | null> {
+export async function readByEmail (data: {email: string}): Promise<UserDTO | null> {
   try {
-    const data = await select<UserDTO>("users", { email })
+    const response = await select<UserDTO>(DATASOURCE, data)
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error getting user by id', error)
   }
@@ -39,18 +41,23 @@ export async function readByEmail (email: string): Promise<UserDTO | null> {
   return null
 }
 
-export async function store (name: string, email: string, password: string, type: UserType): Promise<string | null> {
+export async function store (data: {
+  name: string,
+  email: string,
+  password: string,
+  type: UserType,
+}): Promise<string | null> {
   try {
-    const data = await insertOne("users", {
-      name,
-      email,
-      password,
-      type,
+    const response = await insertOne(DATASOURCE, {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      type: data.type,
       createdAt: new Date(),
       active: 1
     })
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error creating user', error)
   }
@@ -58,14 +65,17 @@ export async function store (name: string, email: string, password: string, type
   return null
 }
 
-export async function update (id: string, name: string): Promise<boolean> {
+export async function update (data: {
+  id: string,
+  name: string,
+}): Promise<boolean> {
   try {
-    const data = await updateOne("users", {_id: new ObjectId(id)}, {
-      name,
+    const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
+      name: data.name,
       updatedAt: new Date()
     })
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error updating user', error)
   }
@@ -73,14 +83,17 @@ export async function update (id: string, name: string): Promise<boolean> {
   return false
 }
 
-export async function updateType (id: string, type: UserType): Promise<boolean> {
+export async function updateType (data: {
+  id: string,
+  type: UserType
+}): Promise<boolean> {
   try {
-    const data = await updateOne("users", {_id: new ObjectId(id)}, {
-      type,
+    const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
+      type: data.type,
       updatedAt: new Date(),
     })
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error updating user', error)
   }
@@ -88,14 +101,17 @@ export async function updateType (id: string, type: UserType): Promise<boolean> 
   return false
 }
 
-export async function updatePassword (id: string, password: string): Promise<boolean> {
+export async function updatePassword (data: {
+  id: string, 
+  password: string,
+}): Promise<boolean> {
   try {
-    const data = await updateOne("users", {_id: new ObjectId(id)}, {
-      password,
+    const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
+      password: data.password,
       updatedAt: new Date(),
     })
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error updating user', error)
   }
@@ -103,14 +119,14 @@ export async function updatePassword (id: string, password: string): Promise<boo
   return false
 }
 
-export async function block (id: string): Promise<boolean> {
+export async function block (data: {id: string}): Promise<boolean> {
   try {
-    const data = await updateOne("users", {_id: new ObjectId(id)}, { 
+    const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, { 
       active: 0,
       deletedAt: new Date(),
     })
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error blocking user', error)
   }
@@ -118,11 +134,11 @@ export async function block (id: string): Promise<boolean> {
   return false
 }
 
-export async function remove (id: string): Promise<boolean> {
+export async function remove (data: {id: string}): Promise<boolean> {
   try {
-    const data = await removeOne("users", {_id: new ObjectId(id)})
+    const response = await removeOne(DATASOURCE, {_id: new ObjectId(data.id)})
 
-    return data
+    return response
   } catch (error) {
     logger.error('Error removing user', error)
   }

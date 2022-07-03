@@ -1,3 +1,5 @@
+import { GenericDTO } from '../../services/database/mongodb/types'
+
 export type SigninUserResponse = {
   id: string,
   name: string,
@@ -6,29 +8,12 @@ export type SigninUserResponse = {
   token: string,
 }
 
-export type CreateUserPayload = {
-  name: string,
-  email: string,
-  password: string,
-  type: UserType,
-}
-
-export type UpdateUserPayload = {
-  id: string,
-  name: string,
-}
-
 export type UserDTO = {
-  _id: string,
   name: string,
   email: string,
   password: string,
   type: UserType,
-  createdAt: Date | string,
-  updatedAt: Date | string,
-  deletedAt: Date | string,
-  active: number
-}
+} & GenericDTO
 
 export type User = {
   id?: string,
