@@ -1,0 +1,17 @@
+version: '3.1'
+
+services:
+
+  api:
+    container_name: template-api-nodejs
+    image: ${PRIVATE_REGISTRY_REPOSITORY}/template-api-nodejs:${STAGE}
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: "sa-east-1"
+        awslogs-group: "template-api-nodejs-${STAGE}"
+        awslogs-create-group: "true"
+    ports:
+      - 8001:8001
+    environment:
+      - "PORT=8001"

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -37,30 +37,36 @@ jobs:
     needs: building
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1
       
       - name: Publishing application on Production
         run: |
-          echo "${{ secrets.SSH_PROD_PRIVATE_KEY }}" > ./aws-key.pem
-          chmod 400 ./aws-key.pem
+          export DOCKER_HOST="ssh://ubuntu@${{ secrets.INSTANCE_IP_PROD }}"
 
-          ssh -o StrictHostKeyChecking=no -i ./aws-key.pem ubuntu@${{ secrets.INSTANCE_IP_PROD }} '
-            aws ecr get-login-password --region sa-east-1 | sudo docker login --username AWS --password-stdin ${{ secrets.PRIVATE_ECR_REPOSITORY }}
-            
-            sudo docker container stop template-api-nodejs || echo "No container to stop"
-            sudo docker container rm template-api-nodejs || echo "No container to remove"
-            sudo docker volume prune -f || echo "No volume to remove"
+          echo "${{ secrets.SSH_PROD_PRIVATE_KEY }}" > ./key.pem
+          chmod 400 ./key.pem
 
-            sudo docker image pull ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
+          eval $(ssh-agent)
+          ssh-add -k ./key.pem
 
-            sudo docker run -d \
-              --name template-api-nodejs \
-              --log-driver=awslogs \
-              --log-opt awslogs-region=sa-east-1 \
-              --log-opt awslogs-group=template-api-nodejs-prod \
-              -p 8001:8001 \
-              -e "PORT=8001" \
-              ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
+          mkdir -p ~/.ssh && echo "Host *" > ~/.ssh/config && echo " StrictHostKeyChecking no" >> ~/.ssh/config
+          
+          cd infra
 
-            sudo docker image prune -f || echo "No images to remove"
-          '
+          echo "" >> .env
+          echo "PRIVATE_REGISTRY_REPOSITORY=${{ secrets.PRIVATE_ECR_REPOSITORY }}" >> .env
+          echo "STAGE=prod" >> .env
+
+          aws ecr get-login-password --region sa-east-1 | docker login --username AWS --password-stdin ${{ secrets.PRIVATE_ECR_REPOSITORY }}
+
+          docker image pull ${{ secrets.PRIVATE_ECR_REPOSITORY }}/template-api-nodejs:prod
+          docker-compose down || echo "No containers on running"
+          docker-compose up --detach --build
+
+          docker system prune -f
