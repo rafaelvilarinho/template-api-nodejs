@@ -1,10 +1,10 @@
 import winston from 'winston'
 
 const logger = winston.createLogger({
-  level: 'silly',
+  levels: winston.config.npm.levels,
   format: winston.format.json(),
   transports: [
-    new winston.transports.Console()
+    new winston.transports.Console({ level: 'silly' }),
   ],
 });
 

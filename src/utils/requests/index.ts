@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios'
+import { Request } from 'express'
 import logger from '../logger'
 
 type RequestResponse<T> = {
@@ -52,4 +53,25 @@ export async function deleteRequest<T>(url: string, payload: Record<string, unkn
     logger.error('Error on DELETE request', {error})
     return undefined
   }
+}
+
+export function logRequestPayload(request: Request) {
+
+  const payload = JSON.parse(JSON.stringify({
+    url: request.url,
+    headers: request.headers,
+    body: request.body,
+    params: request.params
+  }))
+
+  for (let key in payload.body) {
+    switch (key) {
+      case 'password':
+        payload.body.password = "***"
+        break
+      default:
+    }
+  }
+
+  return payload
 }

@@ -1,36 +1,23 @@
-import { MailService } from '@sendgrid/mail'
-import logger from '../../utils/logger'
-import { environment } from '../../config/environment'
+import nodemailerClient from './nodemailer'
 
-export enum MailingTypeEnum {
-  CONTACT='',
-  ACCOUNT_CONFIRMATION='',
-  ACCOUNT_UPDATE='',
-  CONFIRM_SET_PASSWORD='',
+export enum MailingType {
+  SIGNUP_CONFIRM = './src/services/mailing/templates/signup-confirm.html',
+  PASSWORD_CHANGE_REQUEST = './src/services/mailing/templates/password-request.html',
 }
 
-const client = new MailService()
-client.setApiKey(environment.SENDGRID_KEY)
+export async function sendEmail (
+  recipients: string[],
+  subject: string,
+  emailType: MailingType,
+  templateVariables?: Record<string, unknown>
+): Promise<boolean> {
+  const mailingClient = await nodemailerClient.getMailingClient()
+  const result = await mailingClient.sendEmail(
+    recipients,
+    subject,
+    emailType,
+    templateVariables || {}
+  )
 
-export async function sendEmail(email: string, type: MailingTypeEnum, emailSubject: string, data: object): Promise<boolean> {
-  const sendEmailResponse = await executeEmail(email, emailSubject, type, data)
-  return sendEmailResponse
-}
-
-async function executeEmail(email: string, emailSubject: string, templateId: string, data: object): Promise<boolean> {
-  try {
-    const sendResponse = await client.send({
-      from: 'Rafael Vilarinho <vilarinho@ravitecnologia.com.br>',
-      to: email,
-      subject: `${emailSubject}`,
-      dynamicTemplateData: { ...data, emailSubject },
-      templateId
-    })
-
-    return !!sendResponse
-  } catch (error) {
-    logger.error('', error)
-  }
-
-  return false
+  return result
 }

@@ -1,6 +1,6 @@
 import cors from 'cors';
 import express, { json, urlencoded } from "express"
-import userRouter from './app/users/user.route';
+import userRouter from './app/users/users.route';
 import { environment } from './config/environment';
 import logger from './utils/logger';
 
@@ -12,4 +12,4 @@ app.use(json())
 
 app.use('/', userRouter)
 
-app.listen(environment.PORT, () => logger.info(`Running on server via ${environment.PORT} port`));
+app.listen(environment.PORT, () => logger.info(`Running on server on ${environment.PORT} port`));

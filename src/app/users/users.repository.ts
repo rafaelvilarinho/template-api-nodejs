@@ -6,39 +6,46 @@ import { UserDTO, UserType } from './users.types'
 const DATASOURCE = "users"
 
 export async function list (): Promise<UserDTO[]> {
+  const log = logger.child({ func: 'users.repository.list' })
+
   try {
-    const response = await selectAll<UserDTO>(DATASOURCE, {})
+    const data = await selectAll<UserDTO>(DATASOURCE, {})
 
-    return response
+    return data
   } catch (error) {
-    logger.error('Error getting all users', error)
-  } 
-
-  return []
+    log.error('Error on getting a list of users', error)
+    throw error
+  }
 }
 
-export async function read (data: {id: string}): Promise<UserDTO | null> {
+export async function read (data: {
+  id: string
+}): Promise<UserDTO | null> {
+  const log = logger.child({ func: 'users.repository.read', id: data.id })
+
   try {
     const response = await selectById<UserDTO>(DATASOURCE, data.id)
 
     return response
   } catch (error) {
-    logger.error('Error getting user by id', error)
-  }
+    log.error('Error on reading an user by id', error)
 
-  return null
+    throw error
+  }
 }
 
-export async function readByEmail (data: {email: string}): Promise<UserDTO | null> {
+export async function readByEmail (data: { email: string }): Promise<UserDTO | null> {
+  const log = logger.child({ func: 'users.repository.readByEmail', email: data.email })
+
   try {
-    const response = await select<UserDTO>(DATASOURCE, data)
+    const response = await select<UserDTO>(DATASOURCE, { email: data.email })
 
     return response
   } catch (error) {
-    logger.error('Error getting user by id', error)
-  }
+    log.error('Error on reading an user by email', error)
 
-  return null
+    throw error
+  }
 }
 
 export async function store (data: {
@@ -46,7 +53,10 @@ export async function store (data: {
   email: string,
   password: string,
   type: UserType,
+  activation?: boolean,
 }): Promise<string | null> {
+  const log = logger.child({ func: 'users.repository.store', name: data.name, email: data.email, type: data.type })
+
   try {
     const response = await insertOne(DATASOURCE, {
       name: data.name,
@@ -54,21 +64,24 @@ export async function store (data: {
       password: data.password,
       type: data.type,
       createdAt: new Date(),
-      active: 1
+      active: 1,
+      emailConfirm: !data.activation
     })
 
     return response
   } catch (error) {
-    logger.error('Error creating user', error)
-  }
+    log.error('Error on storing an user', error)
 
-  return null
+    throw error
+  }
 }
 
 export async function update (data: {
   id: string,
   name: string,
 }): Promise<boolean> {
+  const log = logger.child({ func: 'users.repository.update', id: data.id, name: data.name })
+
   try {
     const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
       name: data.name,
@@ -77,16 +90,38 @@ export async function update (data: {
 
     return response
   } catch (error) {
-    logger.error('Error updating user', error)
-  }
+    log.error('Error on updating an user', error)
 
-  return false
+    throw error
+  }
+}
+
+export async function updateEmailConfirm (data: {
+  id: string,
+  emailConfirm: boolean,
+}): Promise<boolean> {
+  const log = logger.child({ func: 'users.repository.updateEmailConfirm', id: data.id, emailConfirm: data.emailConfirm })
+
+  try {
+    const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
+      emailConfirm: data.emailConfirm,
+      updatedAt: new Date()
+    })
+
+    return response
+  } catch (error) {
+    log.error('Error on updating emailConfirm field of user', error)
+
+    throw error
+  }
 }
 
 export async function updateType (data: {
   id: string,
   type: UserType
 }): Promise<boolean> {
+  const log = logger.child({ func: 'users.repository.updateType', ...data })
+
   try {
     const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
       type: data.type,
@@ -95,16 +130,18 @@ export async function updateType (data: {
 
     return response
   } catch (error) {
-    logger.error('Error updating user', error)
-  }
+    log.error('Error on updating type of user', error)
 
-  return false
+    throw error
+  }
 }
 
 export async function updatePassword (data: {
-  id: string, 
-  password: string,
+  id: string,
+  password: string
 }): Promise<boolean> {
+  const log = logger.child({ func: 'users.repository.updatePassword', ...data })
+
   try {
     const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, {
       password: data.password,
@@ -113,13 +150,17 @@ export async function updatePassword (data: {
 
     return response
   } catch (error) {
-    logger.error('Error updating user', error)
-  }
+    log.error('Error on updating password of user', error)
 
-  return false
+    throw error
+  }
 }
 
-export async function block (data: {id: string}): Promise<boolean> {
+export async function block (data: {
+  id: string
+}): Promise<boolean> {
+  const log = logger.child({ func: 'users.repository.block', ...data })
+
   try {
     const response = await updateOne(DATASOURCE, {_id: new ObjectId(data.id)}, { 
       active: 0,
@@ -128,20 +169,24 @@ export async function block (data: {id: string}): Promise<boolean> {
 
     return response
   } catch (error) {
-    logger.error('Error blocking user', error)
-  }
+    log.error('Error on blocking an user', error)
 
-  return false
+    throw error
+  }
 }
 
-export async function remove (data: {id: string}): Promise<boolean> {
+export async function remove (data: {
+  id: string
+}): Promise<boolean> {
+  const log = logger.child({ func: 'users.repository.remove', ...data })
+
   try {
     const response = await removeOne(DATASOURCE, {_id: new ObjectId(data.id)})
 
     return response
   } catch (error) {
-    logger.error('Error removing user', error)
-  }
+    log.error('Error on removing an user', error)
 
-  return false
+    throw error
+  }
 }
