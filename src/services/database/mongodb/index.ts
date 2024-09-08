@@ -11,7 +11,7 @@ export async function findAll<T>(collection: string, query: Record<string, unkno
   try {
     await mongoDbClient.connect()
 
-    const cursor = await mongoDbClient
+    const cursor = mongoDbClient
       .db(environment.MONGODB_DATABASE)
       .collection(collection)
       .find<T>(query, options)
@@ -22,7 +22,7 @@ export async function findAll<T>(collection: string, query: Record<string, unkno
   } catch (error) {
     logger.error('', error)
   } finally {
-    mongoDbClient.close()
+    await mongoDbClient.close()
   }
 
   return []
@@ -41,7 +41,7 @@ export async function findOne<T>(collection: string, query: Record<string, unkno
   } catch (error) {
     logger.error('', error)
   } finally {
-    mongoDbClient.close()
+    await mongoDbClient.close()
   }
 
   return null
@@ -60,7 +60,7 @@ export async function insert(collection: string, document: Record<string, unknow
   } catch (error) {
     logger.error('', error)
   } finally {
-    mongoDbClient.close()
+    await mongoDbClient.close()
   }
 
   return null
@@ -84,7 +84,7 @@ export async function update(
   } catch (error) {
     logger.error('', error)
   } finally {
-    mongoDbClient.close()
+    await mongoDbClient.close()
   }
 
   return false
@@ -107,7 +107,7 @@ export async function remove(
   } catch (error) {
     logger.error('', error)
   } finally {
-    mongoDbClient.close()
+    await mongoDbClient.close()
   }
 
   return false
